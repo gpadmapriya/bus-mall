@@ -1,0 +1,23 @@
+*{
+  box-sizing: border-box;
+}
+header {
+  background-color: #999;
+  width: 100%;
+  height: 75px;
+}
+
+main {
+  width: 900 px;
+  margin: auto;
+}
+
+#all-products {
+  float: left;
+}
+
+footer {
+  background-color: #999;
+  width: 100%;
+  height: 90px;
+}
