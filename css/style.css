@@ -8,14 +8,37 @@ header {
 }
 
 main {
-  width: 900 px;
+  width: 1000 px;
   margin: auto;
 }
 
-#all-products {
+#all_products{
+  width: 1000px;
+  overflow:hidden;
+  margin: auto;
+  
+}
+#left_product {
+  width: 30%;
   float: left;
+  border: 1px royalblue solid;
+  text-align: center;
 }
 
+#center_product {
+  width: 30%;
+  float: left;
+  margin-left: 10px;
+  border: 1px royalblue solid;
+  text-align: center;
+}
+#right_product {
+  width: 30%;
+  float: left;
+  margin-left: 10px;
+  border: 1px royalblue solid;
+  text-align: center;
+}
 footer {
   background-color: #999;
   width: 100%;
