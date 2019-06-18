@@ -205,12 +205,73 @@ var handleClickOnProduct = function (event) {
   //when they reach total max clicks, remove the clicky function
   if (totalClicks === 25) {
     allProductsSectionTag.removeEventListener('click', handleClickOnProduct);
-    displayHeader();
-    displayTotals();
+
+    // Render chart
+    makeBusChart();
   }
 };
 
 allProductsSectionTag.addEventListener('click', handleClickOnProduct);
+
+function makeBusChart() {
+
+  var busChartCanvas = document.getElementById('resultsChart');
+
+  //calculate percentage of clicks and store in an array. Randomly generate the bar chart background and border colors.
+  var percents = [];
+  var names = [];
+  var bgColor = [];
+  var chartBorderColor = [];
+
+  for (var i = 0; i < Products.allProducts.length; i++) {
+    var p = Math.floor((Products.allProducts[i].clicks / Products.allProducts[i].timesShown) * 100);
+    if (Products.allProducts[i].timesShown === 0) {
+      p = 0;
+    }
+    names.push(Products.allProducts[i].name);
+    percents.push(p);
+
+    var clr1 = Math.floor(Math.random() * 255);
+    var clr2 = Math.floor(Math.random() * 255);
+    var clr3 = Math.floor(Math.random() * 255);
+    var bgCalcClr = 'rgba(' + clr1 + ', ' + clr2 + ', ' + clr3 + ', ' + '0.2' + ')';
+    var borderColor = 'rgba(' + clr1 + ', ' + clr2 + ', ' + clr3 + ', ' + '1' + ')';
+
+    bgColor.push(bgCalcClr);
+    chartBorderColor.push(borderColor);
+  }
+
+  var chartData = {
+    labels: names,
+    datasets: [{
+      label: '# of Votes',
+      data: percents,
+      backgroundColor: bgColor,
+      borderColor: chartBorderColor,
+      borderWidth: 1
+    }]
+
+  };
+
+  var busChartObject = {
+    type: 'bar',
+    data: chartData,
+    options: {
+      scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          }
+        }]
+      }
+    }
+  };
+
+  var busChart = new Chart(busChartCanvas, busChartObject);
+
+}
+
+
 
 
 

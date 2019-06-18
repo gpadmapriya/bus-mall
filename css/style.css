@@ -43,6 +43,10 @@ main {
 th, td{
   border: 1px solid blue;
 }
+section#results {
+  width: 660px;
+  margin: auto;
+}
 
 footer {
   background-color: #999;
