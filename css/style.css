@@ -39,6 +39,11 @@ main {
   border: 1px royalblue solid;
   text-align: center;
 }
+
+th, td{
+  border: 1px solid blue;
+}
+
 footer {
   background-color: #999;
   width: 100%;
