@@ -3,14 +3,12 @@
 var leftProductOnThePage = null;
 var centerProductOnThePage = null;
 var rightProductOnThePage = null;
-var tableEl = document.getElementById('preferences-table');
 
 var allProductsSectionTag = document.getElementById('all_products');
 var leftProductTag = document.getElementById('left_product_img');
 var rightProductTag = document.getElementById('right_product_img');
 var centerProductTag = document.getElementById('center_product_img');
 var totalClicks = 0;
-
 
 var Products = function (name, imageSrc) {
   this.name = name;
@@ -46,9 +44,24 @@ new Products('USB', './img/usb.gif');
 new Products('Water Can', './img/water-can.jpg');
 new Products('Wine Glass', './img/wine-glass.jpg');
 
-console.log('Products ' + Products);
-
 var pickedProducts = [];
+var localStorageExists = false;
+var productName = [];
+var shownPercentage = [];
+
+//Check if local storage exists. If it does, get the values into local arrays. If not initialize arrays
+if ((JSON.parse(localStorage.getItem('productName')) === null) || (JSON.parse(localStorage.getItem('shownPercentage')) === null)) {
+  localStorageExists = false;
+  productName = [];
+  shownPercentage = [];
+} else {
+  localStorageExists = true;
+  productName = JSON.parse(localStorage.getItem('productName'));
+  shownPercentage = JSON.parse(localStorage.getItem('shownPercentage'));
+}
+
+//Function to pick and render the next 3 products on the page
+
 var pickNextProducts = function () {
   var leftIndexFound = false;
   var rightIndexFound = false;
@@ -68,6 +81,7 @@ var pickNextProducts = function () {
     }
   } while (leftIndexFound);
 
+  //Right and left product cannot be the same and should not have been picked in the previous round
   do {
     rightIndexFound = false;
     rightIndex = Math.floor(Math.random() * Products.allProducts.length);
@@ -79,6 +93,7 @@ var pickNextProducts = function () {
     }
   } while ((rightIndex === leftIndex) || rightIndexFound);
 
+  //Same as above - should not have been picked in the previous round and neighbors cannot be same
   do {
     centerIndexFound = false;
     centerIndex = Math.floor(Math.random() * Products.allProducts.length);
@@ -100,8 +115,9 @@ var pickNextProducts = function () {
   rightProductOnThePage = Products.allProducts[rightIndex];
   centerProductOnThePage = Products.allProducts[centerIndex];
   renderNewProducts(leftIndex, centerIndex, rightIndex);
-
 };
+
+//render the picked images
 
 var renderNewProducts = function (leftIndex, centerIndex, rightIndex) {
   console.log('left product ' + Products.allProducts[leftIndex]);
@@ -110,66 +126,7 @@ var renderNewProducts = function (leftIndex, centerIndex, rightIndex) {
   rightProductTag.src = Products.allProducts[rightIndex].url;
 };
 
-var displayHeader = function () {
-
-  var theadEl = document.createElement('thead');
-  var trEl = document.createElement('tr');
-
-  var thEl;
-  thEl = document.createElement('th');
-  thEl.textContent = 'Product';
-  trEl.appendChild(thEl);
-
-  thEl = document.createElement('th');
-  thEl.textContent = 'Number of Clicks';
-  trEl.appendChild(thEl);
-
-  thEl = document.createElement('th');
-  thEl.textContent = 'Times Shown';
-  trEl.appendChild(thEl);
-
-  thEl = document.createElement('th');
-  thEl.textContent = 'Percentage of clicks';
-  trEl.appendChild(thEl);
-
-  theadEl.appendChild(trEl);
-  tableEl.appendChild(theadEl);
-};
-
-
-var displayTotals = function () {
-  var tbodyEl = document.createElement('tbody');
-
-  for (var i = 0; i < Products.allProducts.length; i++) {
-    var trEl = document.createElement('tr');
-    var tdEl = document.createElement('td');
-    tdEl.textContent = Products.allProducts[i].name;
-    trEl.appendChild(tdEl);
-
-    tdEl = document.createElement('td');
-    tdEl.textContent = Products.allProducts[i].clicks;
-    trEl.appendChild(tdEl);
-
-    tdEl = document.createElement('td');
-    tdEl.textContent = Products.allProducts[i].timesShown;
-    trEl.appendChild(tdEl);
-
-    tdEl = document.createElement('td');
-    var textContent = Math.ceil((Products.allProducts[i].clicks / Products.allProducts[i].timesShown) * 100);
-    if (Products.allProducts[i].timesShown === 0) {
-      tdEl.textContent = 0;
-    } else {
-      tdEl.textContent = textContent;
-    }
-    trEl.appendChild(tdEl);
-
-    tbodyEl.appendChild(trEl);
-  }
-
-  tableEl.appendChild(tbodyEl);
-};
-
-pickNextProducts();
+//Function to handle click event. Totals are displayed after 25 clicks. Store local storage after chart is rendered
 
 var handleClickOnProduct = function (event) {
   console.log('im still alive');
@@ -208,11 +165,16 @@ var handleClickOnProduct = function (event) {
 
     // Render chart
     makeBusChart();
+
+    var productStringified = JSON.stringify(productName);
+    localStorage.setItem('productName', productStringified);
+
+    var shownPercentageStringified = JSON.stringify(shownPercentage);
+    localStorage.setItem('shownPercentage', shownPercentageStringified);
   }
 };
 
-allProductsSectionTag.addEventListener('click', handleClickOnProduct);
-
+//Function to create and render the results chart
 function makeBusChart() {
 
   var busChartCanvas = document.getElementById('resultsChart');
@@ -220,26 +182,62 @@ function makeBusChart() {
   //calculate percentage of clicks and store in an array. Randomly generate the bar chart background and border colors.
   var percents = [];
   var names = [];
+
   var bgColor = [];
   var chartBorderColor = [];
 
-  for (var i = 0; i < Products.allProducts.length; i++) {
-    var p = Math.floor((Products.allProducts[i].clicks / Products.allProducts[i].timesShown) * 100);
-    if (Products.allProducts[i].timesShown === 0) {
-      p = 0;
+  for (var j = 0; j < Products.allProducts.length; j++) {
+    if (localStorageExists) {
+      productName[j] = Products.allProducts[j].name;
+
+      var percentage = Math.ceil((Products.allProducts[j].clicks / Products.allProducts[j].timesShown) * 100);
+      if (percentage === 0) {
+        shownPercentage[j] = 0;
+      } else {
+        shownPercentage[j] = percentage;
+      }
+    } else {
+      //local storage does not exist
+      productName.splice(j, 0, Products.allProducts[j].name);
+      percentage = Math.ceil((Products.allProducts[j].clicks / Products.allProducts[j].timesShown) * 100);
+      if (percentage === 0) {
+        shownPercentage.splice(j, 0, 0);
+      } else {
+        shownPercentage.splice(j, 0, percentage);
+      }
+
     }
-    names.push(Products.allProducts[i].name);
-    percents.push(p);
+  }
 
-    var clr1 = Math.floor(Math.random() * 255);
-    var clr2 = Math.floor(Math.random() * 255);
-    var clr3 = Math.floor(Math.random() * 255);
-    var bgCalcClr = 'rgba(' + clr1 + ', ' + clr2 + ', ' + clr3 + ', ' + '0.2' + ')';
-    var borderColor = 'rgba(' + clr1 + ', ' + clr2 + ', ' + clr3 + ', ' + '1' + ')';
+  var clr1, clr2, clr3, bgCalcClr, borderColor;
 
+  if (localStorageExists) {
+    names = productName;
+    percents = shownPercentage;
+  } else {
+
+    for (var i = 0; i < Products.allProducts.length; i++) {
+      var p = Math.floor((Products.allProducts[i].clicks / Products.allProducts[i].timesShown) * 100);
+      if (Products.allProducts[i].timesShown === 0) {
+        p = 0;
+      }
+      names.push(Products.allProducts[i].name);
+      percents.push(p);
+
+
+    }
+  }
+
+  for (i = 0; i < Products.allProducts.length; i++) {
+    clr1 = Math.floor(Math.random() * 255);
+    clr2 = Math.floor(Math.random() * 255);
+    clr3 = Math.floor(Math.random() * 255);
+    bgCalcClr = 'rgba(' + clr1 + ', ' + clr2 + ', ' + clr3 + ', ' + '0.2' + ')';
+    borderColor = 'rgba(' + clr1 + ', ' + clr2 + ', ' + clr3 + ', ' + '1' + ')';
     bgColor.push(bgCalcClr);
     chartBorderColor.push(borderColor);
   }
+
 
   var chartData = {
     labels: names,
@@ -271,7 +269,11 @@ function makeBusChart() {
 
 }
 
+//Call function to pick next 3 products.
+pickNextProducts();
 
+//Event listener for button click event
+allProductsSectionTag.addEventListener('click', handleClickOnProduct);
 
 
 
