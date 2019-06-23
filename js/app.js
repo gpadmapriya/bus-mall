@@ -1,5 +1,7 @@
 'use strict';
 
+//Set global variables
+
 var leftProductOnThePage = null;
 var centerProductOnThePage = null;
 var rightProductOnThePage = null;
@@ -9,6 +11,12 @@ var leftProductTag = document.getElementById('left_product_img');
 var rightProductTag = document.getElementById('right_product_img');
 var centerProductTag = document.getElementById('center_product_img');
 var totalClicks = 0;
+var pickedProducts = [];
+var localStorageExists = false;
+var productName = [];
+var shownPercentage = [];
+
+//Products constructor
 
 var Products = function (name, imageSrc) {
   this.name = name;
@@ -21,12 +29,12 @@ var Products = function (name, imageSrc) {
 
 Products.allProducts = [];
 
-new Products('Suitcase', './img/bag.jpg');
+//Instantiate all necessary product objects
 
+new Products('Suitcase', './img/bag.jpg');
 new Products('Banana Slicer', './img/banana.jpg');
 new Products('Tablet holder', './img/bathroom.jpg');
 new Products('Boots', './img/boots.jpg');
-
 new Products('Breakfast', './img/breakfast.jpg');
 new Products('Bubblegum', './img/bubblegum.jpg');
 new Products('Chair', './img/chair.jpg');
@@ -43,22 +51,6 @@ new Products('Unicorn Meat', './img/unicorn.jpg');
 new Products('USB', './img/usb.gif');
 new Products('Water Can', './img/water-can.jpg');
 new Products('Wine Glass', './img/wine-glass.jpg');
-
-var pickedProducts = [];
-var localStorageExists = false;
-var productName = [];
-var shownPercentage = [];
-
-//Check if local storage exists. If it does, get the values into local arrays. If not initialize arrays
-if ((JSON.parse(localStorage.getItem('productName')) === null) || (JSON.parse(localStorage.getItem('shownPercentage')) === null)) {
-  localStorageExists = false;
-  productName = [];
-  shownPercentage = [];
-} else {
-  localStorageExists = true;
-  productName = JSON.parse(localStorage.getItem('productName'));
-  shownPercentage = JSON.parse(localStorage.getItem('shownPercentage'));
-}
 
 //Function to pick and render the next 3 products on the page
 
@@ -109,12 +101,16 @@ var pickNextProducts = function () {
   pickedProducts[0] = leftIndex;
   pickedProducts[1] = centerIndex;
   pickedProducts[2] = rightIndex;
+
   console.log('Picked now ' + pickedProducts[0], pickedProducts[1], pickedProducts[2]);
 
   leftProductOnThePage = Products.allProducts[leftIndex];
   rightProductOnThePage = Products.allProducts[rightIndex];
   centerProductOnThePage = Products.allProducts[centerIndex];
+
+  //call function to render the newly picked images
   renderNewProducts(leftIndex, centerIndex, rightIndex);
+
 };
 
 //render the picked images
@@ -126,11 +122,11 @@ var renderNewProducts = function (leftIndex, centerIndex, rightIndex) {
   rightProductTag.src = Products.allProducts[rightIndex].url;
 };
 
-//Function to handle click event. Totals are displayed after 25 clicks. Store local storage after chart is rendered
+//Function to handle click event. Totals are displayed after 25 clicks. Store local storage and render chart
 
 var handleClickOnProduct = function (event) {
-  console.log('im still alive');
-  // if they can still click, do clicky things
+
+  // if total clicks are not 25 yet
   if (totalClicks < 25) {
 
     var thingWeClickedOn = event.target;
@@ -159,35 +155,12 @@ var handleClickOnProduct = function (event) {
   }
   // increment amount of clicks
   totalClicks++;
-  //when they reach total max clicks, remove the clicky function
+
+  //when they reach total max clicks, remove the click function, store local storage and render chart
   if (totalClicks === 25) {
     allProductsSectionTag.removeEventListener('click', handleClickOnProduct);
 
-    // Render chart
-    makeBusChart();
-
-    var productStringified = JSON.stringify(productName);
-    localStorage.setItem('productName', productStringified);
-
-    var shownPercentageStringified = JSON.stringify(shownPercentage);
-    localStorage.setItem('shownPercentage', shownPercentageStringified);
-  }
-};
-
-//Function to create and render the results chart
-function makeBusChart() {
-
-  var busChartCanvas = document.getElementById('resultsChart');
-
-  //calculate percentage of clicks and store in an array. Randomly generate the bar chart background and border colors.
-  var percents = [];
-  var names = [];
-
-  var bgColor = [];
-  var chartBorderColor = [];
-
-  for (var j = 0; j < Products.allProducts.length; j++) {
-    if (localStorageExists) {
+    for (var j = 0; j < Products.allProducts.length; j++) {
       productName[j] = Products.allProducts[j].name;
 
       var percentage = Math.ceil((Products.allProducts[j].clicks / Products.allProducts[j].timesShown) * 100);
@@ -196,39 +169,42 @@ function makeBusChart() {
       } else {
         shownPercentage[j] = percentage;
       }
-    } else {
-      //local storage does not exist
-      productName.splice(j, 0, Products.allProducts[j].name);
-      percentage = Math.ceil((Products.allProducts[j].clicks / Products.allProducts[j].timesShown) * 100);
-      if (percentage === 0) {
-        shownPercentage.splice(j, 0, 0);
-      } else {
-        shownPercentage.splice(j, 0, percentage);
-      }
 
     }
+
+    var productStringified = JSON.stringify(productName);
+    localStorage.setItem('productName', productStringified);
+
+    console.log('product stringified ' + productStringified);
+
+    var shownPercentageStringified = JSON.stringify(shownPercentage);
+    localStorage.setItem('shownPercentage', shownPercentageStringified);
+
+    console.log('percent stringified ' + shownPercentageStringified);
+
+    // Render chart
+    makeBusChart();
   }
+};
+
+//Function to create and render the results chart
+function makeBusChart() {
+
+  var busChartCanvas = document.getElementById('resultsChart');
+
+  var percents = [];
+  var names = [];
+
+  var bgColor = [];
+  var chartBorderColor = [];
 
   var clr1, clr2, clr3, bgCalcClr, borderColor;
 
-  if (localStorageExists) {
-    names = productName;
-    percents = shownPercentage;
-  } else {
+  names = productName;
+  percents = shownPercentage;
 
-    for (var i = 0; i < Products.allProducts.length; i++) {
-      var p = Math.floor((Products.allProducts[i].clicks / Products.allProducts[i].timesShown) * 100);
-      if (Products.allProducts[i].timesShown === 0) {
-        p = 0;
-      }
-      names.push(Products.allProducts[i].name);
-      percents.push(p);
-
-
-    }
-  }
-
-  for (i = 0; i < Products.allProducts.length; i++) {
+  //Randomly generate the bar chart background and border colors.
+  for (var i = 0; i < Products.allProducts.length; i++) {
     clr1 = Math.floor(Math.random() * 255);
     clr2 = Math.floor(Math.random() * 255);
     clr3 = Math.floor(Math.random() * 255);
@@ -238,11 +214,10 @@ function makeBusChart() {
     chartBorderColor.push(borderColor);
   }
 
-
   var chartData = {
     labels: names,
     datasets: [{
-      label: '# of Votes',
+      label: '% of Votes',
       data: percents,
       backgroundColor: bgColor,
       borderColor: chartBorderColor,
@@ -269,11 +244,37 @@ function makeBusChart() {
 
 }
 
-//Call function to pick next 3 products.
-pickNextProducts();
+//function called on page load
+function pageInit() {
+  /*Check if local storage exists. If it does, get the values into local arrays. If not initialize arrays. The values persisted are the product names and their clicked percentages*/
 
-//Event listener for button click event
-allProductsSectionTag.addEventListener('click', handleClickOnProduct);
+  if ((JSON.parse(localStorage.getItem('productName')) === null) || (JSON.parse(localStorage.getItem('shownPercentage')) === null)) {
+    localStorageExists = false;
+    productName = [];
+    shownPercentage = [];
+  } else {
+    localStorageExists = true;
+    productName = JSON.parse(localStorage.getItem('productName'));
+    shownPercentage = JSON.parse(localStorage.getItem('shownPercentage'));
+  }
+
+  //If local storage exists on initial page load, render chart with this data
+  if (localStorageExists) {
+    makeBusChart();
+  }
+
+  //Call function to pick next 3 products.
+  pickNextProducts();
+}
+
+function onImageClick() {
+  //Event listener for button click event
+  allProductsSectionTag.addEventListener('click', handleClickOnProduct);
+}
+
+pageInit();
+onImageClick();
+
 
 
 
